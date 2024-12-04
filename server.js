@@ -3,7 +3,8 @@ const morgan = require('morgan');
 const methodOverride = require('method-override')
 const books = require('./data/books');
 const app = express();
-const path = require('path')
+const path = require('path');
+const { title } = require('process');
 
 
 // ********************
@@ -49,7 +50,7 @@ app.post('/books', (req, res) => {
         author: req.body.author || "new author"
     }
     books.push(newBook);
-    res.status(201).json({ ...newBook, message: "Book Created Successfully." })
+    res.status(201).redirect('/books')
 })
 
 
@@ -57,34 +58,44 @@ app.post('/books', (req, res) => {
 app.get('/books/:id', (req, res) => {
     const book = books.find(book => book.id === parseInt(req.params.id));
     if (book) {
-        res.json(book)
+        res.render('books/show', { title: 'Book Details', book })
     } else {
-        res.status(404).render('error', { title: "Book not found" });
+        res.status(404).render('404/notFound', { title: "Book not found" })
     }
 })
 
-// EDIT
-app.put('/books/:id', (req, res) => {
-    const bookId = parseInt(req.params.id);
-    const bookIndex = books.findIndex(book => book.id === bookId)
-    if (bookIndex !== -1) {
-        books[bookIndex] = { ...books[bookIndex], ...req.body }
-        res.json({ message: "Book updated successfully", book: books[bookIndex] })
+app.get('/books/:id/edit', (req, res) => {
+    const book = books.find(book => book.id === parseInt(req.params.id));
+    if (book) {
+        res.render('books/edit', { title: 'Edit Book', book });
     } else {
-        res.send("Book not found")
+        res.status(404).render('404/notFound', { title: 'Book Not Found!' })
     }
 })
+// EDIT
+// / Update - Update a book
+app.put('/books/:id', (req, res) => {
+    const bookId = parseInt(req.params.id);
+    const bookIndex = books.findIndex(book => book.id === bookId);
+    if (bookIndex !== -1) {
+        books[bookIndex] = { ...books[bookIndex], ...req.body };
+        res.status(200).redirect(`/books`);
+        // res.render('bookUpdated', { title: 'Book Updated', book: books[bookIndex] });
+    } else {
+        res.status(404).render('404/notFound', { title: 'Book Not Found' });
+    }
+});
 
 // DELETE
 app.delete('/books/:id', (req, res) => {
     const bookId = parseInt(req.params.id);
     const bookIndex = books.findIndex(book => book.id === bookId);
     if (bookIndex !== -1) {
-        const deletedBook = books.splice(bookIndex, 1); // Remove the book
-        res.json({ message: "Book deleted successfully", book: deletedBook[0] });
+        books.splice(bookIndex, 1);
     } else {
-        res.status(404).json({ message: "Book not found" });
+        res.status(404).render('404/notFound', { title: 'Book Not Found' });
     }
+    res.redirect('/books');
 });
 
 // ********************
