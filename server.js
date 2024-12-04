@@ -59,7 +59,7 @@ app.get('/books/:id', (req, res) => {
     if (book) {
         res.json(book)
     } else {
-        res.status(404).render({ '404 not found': "Book not found" })
+        res.status(404).render('error', { title: "Book not found" });
     }
 })
 
